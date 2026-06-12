@@ -1,8 +1,8 @@
 #include <Wire.h>
 
-#define SLAVE_ADDRESS 12
+#define SLAVE_ADDRESS 8
 
-int pinLed = 11;
+int pinLed = 7;
 volatile int x = HIGH;
 volatile bool received = false;
 unsigned long lastBlinkTime = 0;
