@@ -1,40 +1,48 @@
 #include <Wire.h>
 
-#define SLAVE1_ADDRESS 8
-#define SLAVE2_ADDRESS 9
+#define SLAVE_COUNT 5
 
-int pushButton_0 = 13;
-int pushButton_1 = 4;
-int x_0 = 0;
-int x_1 = 0;
+const byte slaveAddresses[SLAVE_COUNT] = {8, 9, 10, 11, 12};
+const byte pushButtons[SLAVE_COUNT] = {13, 4, 5, 6, 7};
+
+int buttonStates[SLAVE_COUNT] = {HIGH, HIGH, HIGH, HIGH, HIGH};
+int sendResults[SLAVE_COUNT] = {0, 0, 0, 0, 0};
 
 void setup(){
     Wire.begin();
     Wire.setClock(10000);
     Serial.begin(9600);
-    pinMode(pushButton_0,INPUT_PULLUP);
-    pinMode(pushButton_1,INPUT_PULLUP);
+
+    for (int i = 0; i < SLAVE_COUNT; i++){
+        pinMode(pushButtons[i], INPUT_PULLUP);
+    }
 }
 
 void loop(){
-    Wire.beginTransmission(SLAVE1_ADDRESS);
-    x_0 = digitalRead(pushButton_0);
-    Wire.write(x_0);
-    int result0 = Wire.endTransmission();
-    
-    Wire.beginTransmission(SLAVE2_ADDRESS);
-    x_1 = digitalRead(pushButton_1);
-    Wire.write(x_1);
-    int result1 = Wire.endTransmission();
+    for (int i = 0; i < SLAVE_COUNT; i++){
+        buttonStates[i] = digitalRead(pushButtons[i]);
 
-    Serial.print("button0:");
-    Serial.print(x_0);
-    Serial.print(" slave1:");
-    Serial.print(result0);
-    Serial.print(" button1:");
-    Serial.print(x_1);
-    Serial.print(" slave2:");
-    Serial.println(result1);
+        Wire.beginTransmission(slaveAddresses[i]);
+        Wire.write(buttonStates[i]);
+        sendResults[i] = Wire.endTransmission();
+    }
+
+    for (int i = 0; i < SLAVE_COUNT; i++){
+        Serial.print("button");
+        Serial.print(i + 1);
+        Serial.print(":");
+        Serial.print(buttonStates[i]);
+        Serial.print(" slave");
+        Serial.print(slaveAddresses[i]);
+        Serial.print(":");
+        Serial.print(sendResults[i]);
+
+        if (i < SLAVE_COUNT - 1){
+            Serial.print(" ");
+        }else{
+            Serial.println();
+        }
+    }
 
     delay(100);
 }
