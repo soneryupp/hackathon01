@@ -1,76 +1,27 @@
 # Hackathon01 Guitar Performance System
 
-Processing + Arduinoで作成しているギター演奏システムです。
+Processing + Arduinoで作成しているArduinoオーケストラ/ギター演奏システムです。
 
-最終構成は、親機Arduinoが演奏情報を処理し、I2Cで子機Arduinoへ送信します。子機Arduinoは受け取った演奏情報をUSBシリアル通信でProcessingへ送り、Processing側でギター音を鳴らします。
+親機Arduinoが演奏情報や同期情報を処理し、I2Cで子機Arduinoへ送信します。子機Arduinoは受け取った情報に応じてLEDを制御し、必要に応じてUSBシリアル通信でProcessingへ演奏データを送ります。Processing側ではMinimを使って楽器音を鳴らします。
 
-## フォルダ構成
+## Directory Structure
 
 ```text
-processing/
-  guiter/
-    guiter.pde
-  guiter_standalone_2026-06-09/
-    guiter_standalone_2026-06-09.pde
-
 arduino/
-  I2C通信テスト/
-    hck_00_2026-06-10_m/
-    hck_00_2026-06-10_s1/
-    hck_00_2026-06-10_s2/
-    i2c_scanner_2026-06-10/
+  i2c_tests/
+    2026-06-10/          # 親機1台・子機2台の初期I2Cテスト
+    2026-06-13/          # 親機1台・子機4台のI2Cテスト
+    2026-06-16/          # 開始スイッチ1個で4台のLEDを順番点灯
+    scanners/            # I2Cアドレス確認用スキャナ
+    sync_packet_test/    # 設計書準拠の3バイト同期パケットテスト
+
+processing/
+  audio_main/                  # 設計書準拠の4楽器音源
+  guitar_serial/               # Arduino連携ギター音源
+  guitar_standalone_2026-06-09/ # Arduinoなしのギター単体版
 ```
 
-## Processing
-
-`processing/guiter/guiter.pde` はArduino連携版です。Minimライブラリを使ってギター音を生成します。
-
-受信形式:
-
-```text
-NOTE,音の高さ,強さ,長さ,タイミング
-```
-
-例:
-
-```text
-NOTE,C4,0.7,0.9,0.0
-NOTE,440,700,1.0,0.5
-```
-
-音の高さは `C4` のような音名、または `440` のような周波数で指定できます。
-
-シリアルポートを固定したい場合は、Processing側の以下を書き換えます。
-
-```java
-String fixedPortName = "";
-```
-
-例:
-
-```java
-String fixedPortName = "/dev/cu.usbmodem1101";
-```
-
-空文字のままなら、`usbmodem` または `usbserial` を含むポートを自動で探します。
-
-## Processing単体版
-
-`processing/guiter_standalone_2026-06-09/guiter_standalone_2026-06-09.pde` はArduinoなしで音を確認するための単体版です。
-
-- `1`〜`6`: 弦の音を鳴らす
-- `p`: カエルの歌を演奏する
-
-## Arduino I2Cテスト
-
-`arduino/I2C通信テスト/` に、I2C通信テスト用のArduinoコードを入れています。
-
-- `hck_00_2026-06-10_m`, `s1`, `s2`: 親機1台・子機2台の初期テスト
-- `hck_00_2026-06-13_m`, `s1`〜`s4`: 親機1台・子機4台のテスト
-- `hck_00_2026-06-16_m`, `s1`〜`s4`: 開始スイッチ1個で全子機と通信し，LEDを順番に点灯するテスト
-- `hck_00_test_m`, `s1`〜`s4`: 設計書の関数設計に合わせた3バイト同期パケット通信テスト
-- `i2c_scanner_2026-06-10`: I2Cアドレス確認用スキャナ
-- `i2c_scanner_2026-06-14`: 4台テスト用にアドレス8〜11を確認するスキャナ
+## Arduino I2C Tests
 
 Arduino UnoのI2Cピン:
 
@@ -97,18 +48,61 @@ A5 = SCL
 子機4 = 11
 ```
 
-親機のスイッチピン:
+## Sketches
+
+### 2026-06-10
+
+初期の2台構成テストです。
 
 ```text
-子機1用 = 13
-子機2用 = 4
-子機3用 = 5
-子機4用 = 6
+arduino/i2c_tests/2026-06-10/hck_00_2026-06-10_m/
+arduino/i2c_tests/2026-06-10/hck_00_2026-06-10_s1/
+arduino/i2c_tests/2026-06-10/hck_00_2026-06-10_s2/
 ```
 
-## 同期通信パケット
+### 2026-06-13
 
-`hck_00_test` では，設計書と先輩からの助言に合わせて，親機から子機へ3バイトの同期パケットを送ります。
+4台構成の基本I2Cテストです。
+
+```text
+arduino/i2c_tests/2026-06-13/hck_00_2026-06-13_m/
+arduino/i2c_tests/2026-06-13/hck_00_2026-06-13_s1/
+arduino/i2c_tests/2026-06-13/hck_00_2026-06-13_s2/
+arduino/i2c_tests/2026-06-13/hck_00_2026-06-13_s3/
+arduino/i2c_tests/2026-06-13/hck_00_2026-06-13_s4/
+```
+
+### 2026-06-16
+
+開始スイッチ1個で全子機と通信し、LEDを子機1から子機4まで順に点灯するテストです。
+
+```text
+arduino/i2c_tests/2026-06-16/hck_00_2026-06-16_m/
+arduino/i2c_tests/2026-06-16/hck_00_2026-06-16_s1/
+arduino/i2c_tests/2026-06-16/hck_00_2026-06-16_s2/
+arduino/i2c_tests/2026-06-16/hck_00_2026-06-16_s3/
+arduino/i2c_tests/2026-06-16/hck_00_2026-06-16_s4/
+```
+
+親機の開始スイッチ:
+
+```text
+13番ピン <-> タクトスイッチ <-> GND
+```
+
+### Sync Packet Test
+
+設計書と先輩からの助言に合わせた同期通信テストです。
+
+```text
+arduino/i2c_tests/sync_packet_test/hck_00_test_m/
+arduino/i2c_tests/sync_packet_test/hck_00_test_s1/
+arduino/i2c_tests/sync_packet_test/hck_00_test_s2/
+arduino/i2c_tests/sync_packet_test/hck_00_test_s3/
+arduino/i2c_tests/sync_packet_test/hck_00_test_s4/
+```
+
+親機から子機へ送る3バイト同期パケット:
 
 ```text
 1バイト目 = 拍番号
@@ -116,9 +110,47 @@ A5 = SCL
 3バイト目 = 対象子機ID
 ```
 
-親機側では `sendSyncPacket()`，子機側では `receiveSyncPacket()` と `checkPacket()` を使います。子機は自分の子機IDが対象になった拍でLEDを点灯し，Processingへ演奏データを送ります。
+主な関数:
 
-Processing側の設計書準拠版は以下です。
+```text
+startSync()
+update()
+sendSyncPacket()
+receiveSyncPacket()
+checkPacket()
+formatData()
+sendPerformanceData()
+```
+
+親機スイッチ:
+
+```text
+開始/停止 = 13番ピン
+BPM上昇 = 4番ピン
+BPM下降 = 5番ピン
+```
+
+## I2C Scanners
+
+```text
+arduino/i2c_tests/scanners/i2c_scanner_2026-06-10/
+arduino/i2c_tests/scanners/i2c_scanner_2026-06-14/
+```
+
+4台構成では `i2c_scanner_2026-06-14` を使います。期待する結果:
+
+```text
+address 8: found
+address 9: found
+address 10: found
+address 11: found
+```
+
+## Processing
+
+### audio_main
+
+設計書準拠の4楽器音源です。
 
 ```text
 processing/audio_main/audio_main.pde
@@ -136,37 +168,51 @@ processing/audio_main/DrumSound.pde
 PERF,楽器ID,楽器名,音階,長さ,音量,拍番号,BPM
 ```
 
-## I2Cプルアップ抵抗
-
-I2CのSDA/SCLにはプルアップ抵抗が必要です。
-
-理想:
+例:
 
 ```text
-A4(SDA) -> 4.7kΩ -> 5V
-A5(SCL) -> 4.7kΩ -> 5V
+PERF,2,guitar,E4,0.35,0.75,2,90
 ```
 
-手元に33kΩしかない場合でも、短い配線なら試せます。
+### guitar_serial
+
+Arduino連携版のギター音源です。
 
 ```text
-A4(SDA) -> 33kΩ -> 5V
-A5(SCL) -> 33kΩ -> 5V
+processing/guitar_serial/guitar_serial.pde
 ```
 
-## 今後の方針
-
-I2Cで複数の配列をまとめて送るより、1音ずつ以下の形式で送る方針が安全です。Arduino UnoのWireライブラリは1回あたり32バイト程度が目安です。
+受信形式:
 
 ```text
-pitch,strength,length,timing
+NOTE,音の高さ,強さ,長さ,タイミング
 ```
 
 例:
 
 ```text
-60,70,90,0
-C4,70,90,0
+NOTE,C4,0.7,0.9,0.0
+NOTE,440,700,1.0,0.5
 ```
 
-子機Arduinoは、親機から受け取った文字列の先頭に `NOTE,` を付けてProcessingへ送る想定です。
+### guitar_standalone_2026-06-09
+
+Arduinoなしで音を確認するための単体版です。
+
+```text
+processing/guitar_standalone_2026-06-09/guitar_standalone_2026-06-09.pde
+```
+
+- `1`〜`6`: 弦の音を鳴らす
+- `p`: カエルの歌を演奏する
+
+## I2C Pull-up Resistors
+
+I2CのSDA/SCLにはプルアップ抵抗が必要です。3.3kΩまたは4.7kΩを使います。
+
+```text
+A4(SDA) -> 3.3kΩ or 4.7kΩ -> 5V
+A5(SCL) -> 3.3kΩ or 4.7kΩ -> 5V
+```
+
+プルアップ抵抗はI2Cバス全体で1組、つまりSDA用1本とSCL用1本で十分です。
