@@ -67,7 +67,10 @@ String fixedPortName = "/dev/cu.usbmodem1101";
 
 - `hck_00_2026-06-10_m`, `s1`, `s2`: 親機1台・子機2台の初期テスト
 - `hck_00_2026-06-13_m`, `s1`〜`s4`: 親機1台・子機4台のテスト
+- `hck_00_2026-06-16_m`, `s1`〜`s4`: 開始スイッチ1個で全子機と通信し，LEDを順番に点灯するテスト
+- `hck_00_test_m`, `s1`〜`s4`: 設計書の関数設計に合わせた3バイト同期パケット通信テスト
 - `i2c_scanner_2026-06-10`: I2Cアドレス確認用スキャナ
+- `i2c_scanner_2026-06-14`: 4台テスト用にアドレス8〜11を確認するスキャナ
 
 Arduino UnoのI2Cピン:
 
@@ -101,6 +104,36 @@ A5 = SCL
 子機2用 = 4
 子機3用 = 5
 子機4用 = 6
+```
+
+## 同期通信パケット
+
+`hck_00_test` では，設計書と先輩からの助言に合わせて，親機から子機へ3バイトの同期パケットを送ります。
+
+```text
+1バイト目 = 拍番号
+2バイト目 = BPM
+3バイト目 = 対象子機ID
+```
+
+親機側では `sendSyncPacket()`，子機側では `receiveSyncPacket()` と `checkPacket()` を使います。子機は自分の子機IDが対象になった拍でLEDを点灯し，Processingへ演奏データを送ります。
+
+Processing側の設計書準拠版は以下です。
+
+```text
+processing/audio_main/audio_main.pde
+processing/audio_main/ProcessingAudioManager.pde
+processing/audio_main/InstrumentSound.pde
+processing/audio_main/PianoSound.pde
+processing/audio_main/GuitarSound.pde
+processing/audio_main/FluteSound.pde
+processing/audio_main/DrumSound.pde
+```
+
+子機からProcessingへ送る形式:
+
+```text
+PERF,楽器ID,楽器名,音階,長さ,音量,拍番号,BPM
 ```
 
 ## I2Cプルアップ抵抗
